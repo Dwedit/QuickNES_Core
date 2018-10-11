@@ -624,7 +624,7 @@ bool retro_serialize(void *data, size_t size)
    bool okay = !emu->save_state(writer);
    if (isFastSavestate)
    {
-      emu->SaveAudioBufferState();
+      //emu->SaveAudioBufferState();
    }
    return okay;
 }
@@ -636,7 +636,7 @@ bool retro_unserialize(const void *data, size_t size)
    bool okay = !emu->load_state(reader);
    if (isFastSavestate)
    {
-      emu->RestoreAudioBufferState();
+      //emu->RestoreAudioBufferState();
    }
    return okay;
 }
