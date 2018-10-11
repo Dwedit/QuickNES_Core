@@ -29,9 +29,10 @@ public:
 	channel_t channel( int );
 	long read_samples( blip_sample_t*, long );
 
-	void SaveAudioBufferState();
-	void RestoreAudioBufferState();
-	
+	virtual void SaveAudioBufferState(multi_buffer_state_t &buffer_state) const;
+	virtual void RestoreAudioBufferState(const multi_buffer_state_t& buffer_state);
+	virtual MultiBufferType GetBufferType() const;
+
 private:
 	Nes_Nonlinearizer nonlin;
 	friend Multi_Buffer* set_apu( Nes_Effects_Buffer*, Nes_Apu* );

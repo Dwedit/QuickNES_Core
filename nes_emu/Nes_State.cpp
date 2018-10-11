@@ -46,6 +46,7 @@ Nes_State::Nes_State()
 	Nes_State_::spr_ram     = this->spr_ram;
 	Nes_State_::nametable   = this->nametable;
 	Nes_State_::chr         = this->chr;
+	Nes_State_::buffer_state = &this->buffer_state;
 }
 
 void Nes_State_::clear()
@@ -62,6 +63,7 @@ void Nes_State_::clear()
 	ram_valid      = false;
 	sram_size      = 0;
 	spr_ram_valid  = false;
+	buffer_state_valid = false;
 	nametable_size = 0;
 	chr_size       = 0;
 }
@@ -154,6 +156,8 @@ const char * Nes_State_::write_blocks( Nes_File_Writer& out ) const
 	if ( sram_size )
 		RETURN_ERR( out.write_block( FOUR_CHAR('SRAM'), sram, sram_size ) );
 	
+	if ( buffer_state_valid )
+		RETURN_ERR(out.write_block(FOUR_CHAR('BUFF'), buffer_state, sizeof(multi_buffer_state_t)));
 	return 0;
 }
 
@@ -277,6 +281,11 @@ const char * Nes_State_::read_blocks( Nes_File_Reader& in )
 			RETURN_ERR( in.read_block_data( sram, sram_max ) );
 			break; 
 		
+		case FOUR_CHAR('BUFF'):
+			buffer_state_valid = true;
+			RETURN_ERR(in.read_block_data(buffer_state, sizeof(multi_buffer_state_t)));
+			break;
+
 		default:
 			return 0;
 		}

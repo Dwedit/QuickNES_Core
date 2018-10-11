@@ -137,20 +137,23 @@ long Nes_Buffer::read_samples( blip_sample_t* out, long count )
 	return count;
 }
 
-void Nes_Buffer::SaveAudioBufferState()
+void Nes_Buffer::SaveAudioBufferState(multi_buffer_state_t &buffer_state) const
 {
-	SaveAudioBufferStatePrivate();
-	nonlin.SaveAudioBufferState();
-	buf.SaveAudioBufferState();
-	tnd.SaveAudioBufferState();
+	buffer_state.blip_buffer_count = 2;
+	nonlin.SaveAudioBufferState(buffer_state);
+	buf.SaveAudioBufferState(buffer_state.buffers[0]);
+	tnd.SaveAudioBufferState(buffer_state.buffers[1]);
 }
-
-void Nes_Buffer::RestoreAudioBufferState()
+void Nes_Buffer::RestoreAudioBufferState(const multi_buffer_state_t& buffer_state)
 {
-	RestoreAudioBufferStatePrivate();
-	nonlin.RestoreAudioBufferState();
-	buf.RestoreAudioBufferState();
-	tnd.RestoreAudioBufferState();
+	Multi_Buffer::RestoreAudioBufferState(buffer_state);
+	nonlin.RestoreAudioBufferState(buffer_state);
+	buf.RestoreAudioBufferState(buffer_state.buffers[0]);
+	tnd.RestoreAudioBufferState(buffer_state.buffers[1]);
+}
+MultiBufferType Nes_Buffer::GetBufferType() const
+{
+	return MultiBufferType::NesBuffer;
 }
 
 // Nes_Nonlinearizer
@@ -172,8 +175,6 @@ Nes_Nonlinearizer::Nes_Nonlinearizer()
 		int out = (int) d;
 		table [j & (table_size - 1)] = out;
 	}
-	extra_accum = 0;
-	extra_prev = 0;
 }
 
 Nes_Apu* Nes_Nonlinearizer::enable( bool b, Blip_Buffer* buf )
@@ -224,14 +225,14 @@ void Nes_Nonlinearizer::clear()
 	// TODO: still results in slight clicks and thumps
 }
 
-void Nes_Nonlinearizer::SaveAudioBufferState()
+void Nes_Nonlinearizer::SaveAudioBufferState(multi_buffer_state_t &buffer_state) const
 {
-	extra_accum = accum;
-	extra_prev = prev;
+	buffer_state.nonlinear_accum = accum;
+	buffer_state.nonlinear_prev = prev;
 }
 
-void Nes_Nonlinearizer::RestoreAudioBufferState()
+void Nes_Nonlinearizer::RestoreAudioBufferState(const multi_buffer_state_t &buffer_state)
 {
-	accum = extra_accum;
-	prev = extra_prev;
+	accum = buffer_state.nonlinear_accum;
+	prev = buffer_state.nonlinear_prev;
 }

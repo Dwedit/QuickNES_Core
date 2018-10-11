@@ -253,12 +253,9 @@ private:
 	bool init_called;
 	const char * auto_init();
 
-	bool extra_fade_sound_in;
-	bool extra_fade_sound_out;
-	unsigned extra_sound_buf_changed_count;
 public:
-	void SaveAudioBufferState();
-	void RestoreAudioBufferState();
+	void SaveAudioBufferState(multi_buffer_state_t &buffer_state) const;
+	void RestoreAudioBufferState(const multi_buffer_state_t &buffer_state);
 };
 
 inline void Nes_Emu::set_pixels( void* p, long n )

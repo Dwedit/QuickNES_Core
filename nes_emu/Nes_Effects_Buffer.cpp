@@ -82,10 +82,17 @@ long Nes_Effects_Buffer::read_samples( blip_sample_t* out, long count )
 	return Effects_Buffer::read_samples( out, count );
 }
 
-void Nes_Effects_Buffer::SaveAudioBufferState()
+void Nes_Effects_Buffer::SaveAudioBufferState(multi_buffer_state_t &buffer_state) const
 {
+	//not implemented
+	//buffer_state.blip_buffer_count = 7;
 }
-
-void Nes_Effects_Buffer::RestoreAudioBufferState()
+void Nes_Effects_Buffer::RestoreAudioBufferState(const multi_buffer_state_t& buffer_state)
 {
+	//not implemented
+	//Multi_Buffer::RestoreAudioBufferState(buffer_state);
+}
+MultiBufferType Nes_Effects_Buffer::GetBufferType() const
+{
+	return MultiBufferType::NesEffectsBuffer;
 }

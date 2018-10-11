@@ -100,7 +100,7 @@ const char *Effects_Buffer::set_sample_rate( long rate, int msec )
 		CHECK_ALLOC( reverb_buf );
 	}
 	
-	for ( int i = 0; i < buf_count; i++ )
+	for (int i = 0; i < buf_count; i++)
 		RETURN_ERR( bufs [i].set_sample_rate( rate, msec ) );
 	
 	config( config_ );
@@ -423,13 +423,16 @@ void Effects_Buffer::mix_mono_enhanced( blip_sample_t* out, long count )
 		if ( (int16_t) left != left )
 			left = 0x7FFF - (left >> 24);
 		
-		out [0] = left;
-		out [1] = right;
+		if (out != NULL)
+		{
+			out [0] = left;
+			out [1] = right;
 		
-		out += 2;
+			out += 2;
 		
-		if ( (int16_t) right != right )
-			out [-1] = 0x7FFF - (right >> 24);
+			if ( (int16_t) right != right )
+				out [-1] = 0x7FFF - (right >> 24);
+		}
 	}
 	this->reverb_pos = reverb_pos;
 	this->echo_pos = echo_pos;

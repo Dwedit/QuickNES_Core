@@ -17,9 +17,6 @@ private:
 	Nes_Apu* apu;
 	long accum;
 	long prev;
-	
-	long extra_accum;
-	long extra_prev;
 public:
 	Nes_Nonlinearizer();
 	bool enabled;
@@ -27,8 +24,8 @@ public:
 	void set_apu( Nes_Apu* a ) { apu = a; }
 	Nes_Apu* enable( bool, Blip_Buffer* tnd );
 	long make_nonlinear( Blip_Buffer& buf, long count );
-	void SaveAudioBufferState();
-	void RestoreAudioBufferState();
+	void SaveAudioBufferState(multi_buffer_state_t &buffer_state) const;
+	void RestoreAudioBufferState(const multi_buffer_state_t &buffer_state);
 };
 
 class Nes_Buffer : public Multi_Buffer {
@@ -63,8 +60,9 @@ private:
 	Nes_Nonlinearizer nonlin;
 	friend Multi_Buffer* set_apu( Nes_Buffer*, Nes_Apu* );
 public:
-	virtual void SaveAudioBufferState();
-	virtual void RestoreAudioBufferState();
+	virtual void SaveAudioBufferState(multi_buffer_state_t &buffer_state) const;
+	virtual void RestoreAudioBufferState(const multi_buffer_state_t& buffer_state);
+	virtual MultiBufferType GetBufferType() const;
 };
 
 #endif

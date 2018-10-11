@@ -8,6 +8,7 @@
 
 #include "Nes_File.h"
 #include "Nes_Cpu.h"
+#include "Multi_Buffer.h"
 class Nes_Emu;
 class Nes_State;
 
@@ -66,9 +67,11 @@ public:
 	apu_state_t*            apu;
 	ppu_state_t*            ppu;
 	mapper_state_t*         mapper;
+	multi_buffer_state_t*   buffer_state;
 	
 	bool nes_valid, cpu_valid, joypad_valid, apu_valid, ppu_valid;
 	bool mapper_valid, ram_valid, spr_ram_valid;
+	bool buffer_state_valid;
 	short sram_size, nametable_size, chr_size;
 	
 	// Invalidate all state
@@ -99,6 +102,7 @@ private:
 	apu_state_t             apu;
 	ppu_state_t             ppu;
 	mapper_state_t          mapper;
+	multi_buffer_state_t    buffer_state;
 	uint8_t ram [ram_size];
 	uint8_t sram [sram_max];
 	uint8_t spr_ram [spr_ram_size];

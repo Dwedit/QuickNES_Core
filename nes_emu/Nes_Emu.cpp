@@ -50,10 +50,6 @@ Nes_Emu::Nes_Emu()
 	init_called = false;
 	set_palette_range( 0 );
 	memset( single_frame.palette, 0, sizeof single_frame.palette );
-
-	extra_fade_sound_in = false;
-	extra_fade_sound_out = false;
-	extra_sound_buf_changed_count = 0;
 }
 
 Nes_Emu::~Nes_Emu()
@@ -228,8 +224,14 @@ const char * Nes_Emu::load_state( Auto_File_Reader in )
 	state->clear();  //initialize it
 	CHECK_ALLOC( state );
 	const char * err = state->read( in );
-	if ( !err )
-		load_state( *state );
+	if (!err)
+	{
+		load_state(*state);
+		if (state->buffer_state_valid)
+		{
+			RestoreAudioBufferState(state->buffer_state);
+		}
+	}
 	delete state;
 	return err;
 }
@@ -239,6 +241,8 @@ const char * Nes_Emu::save_state( Auto_File_Writer out ) const
 	Nes_State* state = BLARGG_NEW Nes_State;
 	CHECK_ALLOC( state );
 	save_state( state );
+	SaveAudioBufferState(state->buffer_state);
+	state->buffer_state_valid = true;
 	const char * err = state->write( out );
 	delete state;
 	return err;
@@ -503,17 +507,34 @@ Nes_Emu::rgb_t const Nes_Emu::nes_colors [color_table_size] =
 	{136,190,197},{184,184,184},{  0,  0,  0},{  0,  0,  0}
 };
 
-void Nes_Emu::SaveAudioBufferState()
+void Nes_Emu::SaveAudioBufferState(multi_buffer_state_t &buffer_state) const
 {
-	extra_fade_sound_in = fade_sound_in;
-	extra_fade_sound_out = fade_sound_out;
-	extra_sound_buf_changed_count = sound_buf_changed_count;
-	sound_buf->SaveAudioBufferState();
+	buffer_state.audio_buffer_type = sound_buf->GetBufferType();
+	buffer_state.bass = this->equalizer_.bass;
+	buffer_state.treble = this->equalizer_.treble;
+	buffer_state.sample_rate = this->sound_buf->sample_rate();
+	buffer_state.fade_sound_in = this->fade_sound_in;
+	buffer_state.fade_sound_out = this->fade_sound_out;
+	buffer_state.sound_buf_changed_count = this->sound_buf_changed_count;
+	buffer_state.channels_changed_count = this->sound_buf->channels_changed_count();
+	sound_buf->SaveAudioBufferState(buffer_state);
 }
-void Nes_Emu::RestoreAudioBufferState()
+
+void Nes_Emu::RestoreAudioBufferState(const multi_buffer_state_t &buffer_state)
 {
-	fade_sound_in = extra_fade_sound_in;
-	fade_sound_out = extra_fade_sound_out;
-	sound_buf_changed_count = extra_sound_buf_changed_count;
-	sound_buf->RestoreAudioBufferState();
+	if (sound_buf->GetBufferType() == buffer_state.audio_buffer_type &&
+		this->sound_buf->sample_rate() == buffer_state.sample_rate &&
+		this->equalizer_.bass == buffer_state.bass &&
+		this->equalizer_.treble == buffer_state.treble &&
+		sound_buf->GetBufferType() != MultiBufferType::NesEffectsBuffer)
+	{
+		//this->equalizer_.bass = buffer_state.bass;
+		//this->equalizer_.treble = buffer_state.treble;
+		//this->set_equalizer(this->equalizer_);
+		//this->set_sample_rate(buffer_state.sample_rate);
+		this->fade_sound_in = buffer_state.fade_sound_in;
+		this->fade_sound_out = buffer_state.fade_sound_out;
+		this->sound_buf_changed_count = buffer_state.sound_buf_changed_count;
+		sound_buf->RestoreAudioBufferState(buffer_state);
+	}
 }

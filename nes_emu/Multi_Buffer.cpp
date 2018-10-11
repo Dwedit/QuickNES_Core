@@ -21,7 +21,6 @@ Multi_Buffer::Multi_Buffer( int spf ) : samples_per_frame_( spf )
 	length_ = 0;
 	sample_rate_ = 0;
 	channels_changed_count_ = 1;
-	channels_changed_count_save_ = 1;
 }
 
 const char * Multi_Buffer::set_channel_count( int )
@@ -29,14 +28,9 @@ const char * Multi_Buffer::set_channel_count( int )
 	return 0;
 }
 
-void Multi_Buffer::SaveAudioBufferStatePrivate()
+void Multi_Buffer::RestoreAudioBufferState(const multi_buffer_state_t& buffer_state)
 {
-	channels_changed_count_save_ = channels_changed_count_;
-}
-
-void Multi_Buffer::RestoreAudioBufferStatePrivate()
-{
-	channels_changed_count_ = channels_changed_count_save_;
+	this->channels_changed_count_ = buffer_state.channels_changed_count;
 }
 
 Mono_Buffer::Mono_Buffer() : Multi_Buffer( 1 )
@@ -53,16 +47,19 @@ const char * Mono_Buffer::set_sample_rate( long rate, int msec )
 	return Multi_Buffer::set_sample_rate( buf.sample_rate(), buf.length() );
 }
 
-void Mono_Buffer::SaveAudioBufferState()
+void Mono_Buffer::SaveAudioBufferState(multi_buffer_state_t &buffer_state) const
 {
-	SaveAudioBufferStatePrivate();
-	center()->SaveAudioBufferState();
+	buffer_state.blip_buffer_count = 1;
+	buf.SaveAudioBufferState(buffer_state.buffers[0]);
 }
-
-void Mono_Buffer::RestoreAudioBufferState()
+void Mono_Buffer::RestoreAudioBufferState(const multi_buffer_state_t& buffer_state)
 {
-	RestoreAudioBufferStatePrivate();
-	center()->RestoreAudioBufferState();
+	Multi_Buffer::RestoreAudioBufferState(buffer_state);
+	buf.RestoreAudioBufferState(buffer_state.buffers[0]);
+}
+MultiBufferType Mono_Buffer::GetBufferType() const
+{
+	return MultiBufferType::MonoBuffer;
 }
 
 // Silent_Buffer
@@ -74,14 +71,17 @@ Silent_Buffer::Silent_Buffer() : Multi_Buffer( 1 ) // 0 channels would probably 
 	chan.right  = NULL;
 }
 
-void Silent_Buffer::SaveAudioBufferState()
+void Silent_Buffer::SaveAudioBufferState(multi_buffer_state_t &buffer_state) const
 {
-	SaveAudioBufferStatePrivate();
+	buffer_state.blip_buffer_count = 0;
 }
-
-void Silent_Buffer::RestoreAudioBufferState()
+void Silent_Buffer::RestoreAudioBufferState(const multi_buffer_state_t& buffer_state)
 {
-	RestoreAudioBufferStatePrivate();
+	Multi_Buffer::RestoreAudioBufferState(buffer_state);
+}
+MultiBufferType Silent_Buffer::GetBufferType() const
+{
+	return MultiBufferType::SilentBuffer;
 }
 
 // Mono_Buffer
@@ -266,17 +266,21 @@ void Stereo_Buffer::mix_mono( blip_sample_t* out, long count )
 	in.end( bufs [0] );
 }
 
-void Stereo_Buffer::SaveAudioBufferState()
+void Stereo_Buffer::SaveAudioBufferState(multi_buffer_state_t &buffer_state) const
 {
-	SaveAudioBufferStatePrivate();
-	left()->SaveAudioBufferState();
-	center()->SaveAudioBufferState();
-	right()->SaveAudioBufferState();
+	buffer_state.blip_buffer_count = 3;
+	bufs[0].SaveAudioBufferState(buffer_state.buffers[0]);
+	bufs[1].SaveAudioBufferState(buffer_state.buffers[1]);
+	bufs[2].SaveAudioBufferState(buffer_state.buffers[2]);
 }
-void Stereo_Buffer::RestoreAudioBufferState()
+void Stereo_Buffer::RestoreAudioBufferState(const multi_buffer_state_t& buffer_state)
 {
-	RestoreAudioBufferStatePrivate();
-	left()->RestoreAudioBufferState();
-	center()->RestoreAudioBufferState();
-	right()->RestoreAudioBufferState();
+	Multi_Buffer::RestoreAudioBufferState(buffer_state);
+	bufs[0].RestoreAudioBufferState(buffer_state.buffers[0]);
+	bufs[1].RestoreAudioBufferState(buffer_state.buffers[1]);
+	bufs[2].RestoreAudioBufferState(buffer_state.buffers[2]);
+}
+MultiBufferType Stereo_Buffer::GetBufferType() const
+{
+	return MultiBufferType::StereoBuffer;
 }

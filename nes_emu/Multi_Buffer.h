@@ -9,6 +9,32 @@
 #include "blargg_common.h"
 #include "Blip_Buffer.h"
 
+struct multi_buffer_state_t
+{
+	int32_t sample_rate;
+	int32_t bass;
+	double treble;
+	uint8_t audio_buffer_type;
+	uint8_t blip_buffer_count;
+	uint8_t fade_sound_in;
+	uint8_t fade_sound_out;
+	uint32_t sound_buf_changed_count;
+	uint32_t channels_changed_count;
+	int32_t nonlinear_accum;
+	int32_t nonlinear_prev;
+	blip_buffer_state_t buffers[3];
+};
+
+
+enum MultiBufferType
+{
+	SilentBuffer = 0,
+	MonoBuffer = 1,
+	StereoBuffer = 2,
+	NesBuffer = 3,
+	NesEffectsBuffer = 4,
+};
+
 // Interface to one or more Blip_Buffers mapped to one or more channels
 // consisting of left, center, and right buffers.
 class Multi_Buffer {
@@ -64,13 +90,10 @@ private:
 	long sample_rate_;
 	int length_;
 	int const samples_per_frame_;
-	unsigned channels_changed_count_save_;
-protected:
-	void SaveAudioBufferStatePrivate();
-	void RestoreAudioBufferStatePrivate();
 public:
-	virtual void SaveAudioBufferState() = 0;
-	virtual void RestoreAudioBufferState() = 0;
+	virtual void SaveAudioBufferState(multi_buffer_state_t &buffer_state) const = 0;
+	virtual void RestoreAudioBufferState(const multi_buffer_state_t& buffer_state);
+	virtual MultiBufferType GetBufferType() const = 0;
 };
 
 // Uses a single buffer and outputs mono samples.
@@ -93,8 +116,9 @@ public:
 	long samples_avail() const;
 	long read_samples( blip_sample_t*, long );
 
-	virtual void SaveAudioBufferState();
-	virtual void RestoreAudioBufferState();
+	virtual void SaveAudioBufferState(multi_buffer_state_t &buffer_state) const;
+	virtual void RestoreAudioBufferState(const multi_buffer_state_t& buffer_state);
+	virtual MultiBufferType GetBufferType() const;
 };
 
 // Uses three buffers (one for center) and outputs stereo sample pairs.
@@ -129,8 +153,9 @@ private:
 	void mix_stereo( blip_sample_t*, long );
 	void mix_mono( blip_sample_t*, long );
 
-	virtual void SaveAudioBufferState();
-	virtual void RestoreAudioBufferState();
+	virtual void SaveAudioBufferState(multi_buffer_state_t &buffer_state) const;
+	virtual void RestoreAudioBufferState(const multi_buffer_state_t& buffer_state);
+	virtual MultiBufferType GetBufferType() const;
 };
 
 // Silent_Buffer generates no samples, useful where no sound is wanted
@@ -148,8 +173,9 @@ public:
 	long samples_avail() const { return 0; }
 	long read_samples( blip_sample_t*, long ) { return 0; }
 
-	virtual void SaveAudioBufferState();
-	virtual void RestoreAudioBufferState();
+	virtual void SaveAudioBufferState(multi_buffer_state_t &buffer_state) const;
+	virtual void RestoreAudioBufferState(const multi_buffer_state_t& buffer_state);
+	virtual MultiBufferType GetBufferType() const;
 };
 
 

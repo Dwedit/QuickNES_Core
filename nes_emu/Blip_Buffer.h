@@ -6,6 +6,16 @@
 #ifndef BLIP_BUFFER_H
 #define BLIP_BUFFER_H
 
+#include <stdint.h>
+
+struct blip_buffer_state_t
+{
+	int32_t length;
+	uint32_t offset;
+	int32_t reader_accum;
+	int32_t extra_buffer[32];
+};
+
 // Time unit at source clock rate
 typedef long blip_time_t;
 
@@ -107,15 +117,9 @@ private:
 	int length_;
 	friend class Blip_Reader;
 
-private:
-	//extra information necessary to load state to an exact sample
-	buf_t_ extra_buffer[32];
-	int extra_length;
-	long extra_reader_accum;
-	blip_resampled_time_t extra_offset;
 public:
-	void SaveAudioBufferState();
-	void RestoreAudioBufferState();
+	void SaveAudioBufferState(blip_buffer_state_t &buffer_state) const;
+	void RestoreAudioBufferState(const blip_buffer_state_t &buffer_state);
 };
 
 #ifdef HAVE_CONFIG_H

@@ -37,11 +37,6 @@ Blip_Buffer::Blip_Buffer()
 	clock_rate_ = 0;
 	bass_freq_ = 16;
 	length_ = 0;
-
-	extra_length = length_;
-	extra_offset = offset_;
-	extra_reader_accum = reader_accum;
-	memset(extra_buffer, 0, sizeof(extra_buffer));
 }
 
 Blip_Buffer::~Blip_Buffer()
@@ -406,17 +401,17 @@ void Blip_Buffer::mix_samples( blip_sample_t const* in, long count )
 	*out -= prev;
 }
 
-void Blip_Buffer::SaveAudioBufferState()
+void Blip_Buffer::SaveAudioBufferState(blip_buffer_state_t &buffer_state) const
 {
-	extra_length = length_;
-	extra_offset = offset_;
-	extra_reader_accum = reader_accum;
-	memcpy(extra_buffer, buffer_, sizeof(extra_buffer));
+	buffer_state.length = length_;
+	buffer_state.offset = offset_;
+	buffer_state.reader_accum= reader_accum;
+	memcpy(buffer_state.extra_buffer, buffer_, sizeof(buffer_state.extra_buffer));
 }
-void Blip_Buffer::RestoreAudioBufferState()
+void Blip_Buffer::RestoreAudioBufferState(const blip_buffer_state_t &buffer_state)
 {
-	length_ = extra_length;
-	offset_ = extra_offset;
-	reader_accum = extra_reader_accum;
-	memcpy(buffer_, extra_buffer, sizeof(extra_buffer));
+	length_ = buffer_state.length;
+	offset_ = buffer_state.offset;
+	reader_accum = buffer_state.reader_accum;
+	memcpy(buffer_, buffer_state.extra_buffer, sizeof(buffer_state.extra_buffer));
 }
